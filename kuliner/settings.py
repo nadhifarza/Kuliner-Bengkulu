@@ -44,12 +44,9 @@ if not DEBUG and SECRET_KEY == 'dev-only-kuliner-bengkulu-change-before-producti
     )
 
 ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv(
-        'ALLOWED_HOSTS',
-        '127.0.0.1,localhost'
-    ).split(',')
-    if host.strip()
+    'localhost',
+    '127.0.0.1',
+    'kuliner-bengkulu.ethiodeploy.app',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
