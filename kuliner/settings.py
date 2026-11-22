@@ -1,6 +1,7 @@
 
 from pathlib import Path
 import os
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -122,40 +123,48 @@ TEMPLATES = [
 ]
 
 
-# =========================================================
+
+# ==========================================
 # DATABASE CONFIGURATION
-# =========================================================
+# ==========================================
 
-if os.getenv('DB_ENGINE', 'sqlite').strip().lower() == 'mysql':
+DATABASE_URL = os.getenv('DATABASE_URL')
 
+if DATABASE_URL:
+    # Production: MySQL dari EthioDeploy
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+        )
+    }
+
+elif os.getenv('DB_ENGINE', 'sqlite').strip().lower() == 'mysql':
+    # MySQL lokal jika dikonfigurasi manual
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv(
-                'DB_NAME',
-                'kuliner_bengkulu'
-            ),
+            'NAME': os.getenv('DB_NAME', 'kuliner_bengkulu'),
             'USER': os.getenv('DB_USER', 'root'),
             'PASSWORD': os.getenv('DB_PASSWORD', ''),
             'HOST': os.getenv('DB_HOST', '127.0.0.1'),
             'PORT': os.getenv('DB_PORT', '3306'),
-
             'OPTIONS': {
                 'charset': 'utf8mb4',
             },
-
             'CONN_MAX_AGE': 60,
         }
     }
 
 else:
-
+    # Development lokal: SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 
 
 # =========================================================
