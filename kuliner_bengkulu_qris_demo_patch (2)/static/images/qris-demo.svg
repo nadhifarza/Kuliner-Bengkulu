@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420" role="img" aria-labelledby="title desc">
+  <title id="title">Ilustrasi QRIS demo</title>
+  <desc id="desc">Pola kotak dekoratif dengan tulisan DEMO. Bukan kode QR pembayaran yang dapat dipindai.</desc>
+  <rect width="420" height="420" rx="24" fill="#fffdf8"/>
+  <rect x="24" y="24" width="372" height="372" rx="16" fill="#ffffff" stroke="#e8d7c7" stroke-width="3"/>
+  <g fill="#7a0e15">
+    <path d="M52 52h112v112H52z M68 68v80h80V68z M85 85h46v46H85z"/>
+    <path d="M256 52h112v112H256z M272 68v80h80V68z M289 85h46v46H289z"/>
+    <path d="M52 256h112v112H52z M68 272v80h80v-80z M85 289h46v46H85z"/>
+    <path d="M190 56h18v18h-18z M218 56h18v18h-18z M190 84h18v18h-18z M218 112h18v18h-18z M190 140h18v18h-18z M178 178h18v18h-18z M206 178h18v18h-18z M234 178h18v18h-18z M262 178h18v18h-18z M290 178h18v18h-18z M318 178h18v18h-18z M346 178h18v18h-18z M178 206h18v18h-18z M234 206h18v18h-18z M290 206h18v18h-18z M346 206h18v18h-18z M178 234h18v18h-18z M206 234h18v18h-18z M262 234h18v18h-18z M318 234h18v18h-18z M178 262h18v18h-18z M206 290h18v18h-18z M234 318h18v18h-18z M262 290h18v18h-18z M290 318h18v18h-18z M318 290h18v18h-18z M346 346h18v18h-18z"/>
+  </g>
+  <rect x="111" y="177" width="198" height="66" rx="14" fill="#fff6e6" stroke="#c0392b" stroke-width="4"/>
+  <text x="210" y="220" text-anchor="middle" font-family="Arial,sans-serif" font-size="38" font-weight="800" letter-spacing="5" fill="#7a0e15">DEMO</text>
+  <text x="210" y="386" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="1.5" fill="#7a0e15">BUKAN QRIS PEMBAYARAN</text>
+</svg>

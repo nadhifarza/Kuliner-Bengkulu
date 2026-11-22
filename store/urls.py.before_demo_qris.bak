@@ -1,0 +1,23 @@
+from django.urls import path
+from django.contrib.auth import views as auth_views
+from . import views
+urlpatterns=[
+ path('',views.home,name='home'),path('login/',views.login_view,name='login'),path('logout/',views.logout_view,name='logout'),
+ path('registrasi/',views.register_view,name='register'),path('verifikasi-email/<str:token>/',views.verify_email,name='verify_email'),path('ganti-email/',views.change_email,name='change_email'),path('verifikasi-email-baru/<str:token>/',views.verify_new_email,name='verify_new_email'),path('go/',views.role_home,name='role_home'),
+ path('ubah-password/',auth_views.PasswordChangeView.as_view(template_name='registration/password_change_form.html',success_url='/ubah-password/selesai/'),name='password_change'),
+ path('ubah-password/selesai/',auth_views.PasswordChangeDoneView.as_view(template_name='registration/password_change_done.html'),name='password_change_done'),
+ path('lupa-password/',auth_views.PasswordResetView.as_view(template_name='registration/password_reset_form.html',email_template_name='registration/password_reset_email.html',success_url='/lupa-password/terkirim/'),name='password_reset'),
+ path('lupa-password/terkirim/',auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'),name='password_reset_done'),
+ path('reset-password/<uidb64>/<token>/',auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html',success_url='/reset-password/selesai/'),name='password_reset_confirm'),
+ path('reset-password/selesai/',auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'),name='password_reset_complete'),
+ path('beranda/',views.home,name='home_alias'),path('katalog/',views.catalog,name='catalog'),path('produk/<slug:slug>/',views.product_detail,name='product_detail'),
+ path('keranjang/',views.cart_view,name='cart'),path('keranjang/tambah/<int:product_id>/',views.add_to_cart,name='add_to_cart'),path('keranjang/perbarui/<int:item_id>/',views.update_cart_item,name='update_cart_item'),
+ path('checkout/',views.checkout,name='checkout'),path('pembayaran/<str:code>/',views.payment_select,name='payment_select'),path('pembayaran/<str:code>/detail/',views.payment_detail,name='payment_detail'),
+ path('pesanan/',views.order_history,name='order_history'),path('pesanan/<str:code>/',views.order_detail,name='order_detail'),path('pesanan/<str:code>/batal/',views.cancel_order,name='cancel_order'),
+ path('profil/',views.profile,name='profile'),path('alamat/',views.address_list,name='addresses'),path('alamat/tambah/',views.address_form,name='address_add'),path('alamat/<int:pk>/ubah/',views.address_form,name='address_edit'),path('alamat/<int:pk>/hapus/',views.address_delete,name='address_delete'),
+ path('notifikasi/',views.notifications,name='notifications'),path('informasi/<slug:slug>/',views.info_page,name='info_page'),path('webhook/payment/',views.payment_webhook,name='payment_webhook'),
+ path('pengelola/',views.admin_dashboard,name='admin_dashboard'),path('pengelola/produk/',views.admin_products,name='admin_products'),path('pengelola/produk/tambah/',views.admin_product_form,name='admin_product_add'),path('pengelola/produk/<int:pk>/ubah/',views.admin_product_form,name='admin_product_edit'),path('pengelola/produk/<int:pk>/hapus/',views.admin_product_delete,name='admin_product_delete'),
+ path('pengelola/kategori/',views.admin_categories,name='admin_categories'),path('pengelola/kategori/<int:pk>/hapus/',views.admin_category_delete,name='admin_category_delete'),path('pengelola/pegawai/',views.admin_employees,name='admin_employees'),path('pengelola/pegawai/tambah/',views.admin_employee_form,name='admin_employee_add'),
+ path('pengelola/laporan/<slug:kind>/',views.admin_reports,name='admin_reports'),path('pengelola/ekspor/<str:fmt>/',views.export_report,name='export_report'),path('pengelola/profil-usaha/',views.admin_business,name='admin_business'),path('pengelola/banner/',views.admin_banners,name='admin_banners'),path('pengelola/banner/tambah/',views.admin_banner_form,name='admin_banner_add'),path('pengelola/banner/<int:pk>/ubah/',views.admin_banner_form,name='admin_banner_edit'),path('pengelola/banner/<int:pk>/hapus/',views.admin_banner_delete,name='admin_banner_delete'),
+ path('operasional/',views.employee_dashboard,name='employee_dashboard'),path('operasional/pembayaran/',views.employee_payments,name='employee_payments'),path('operasional/pembayaran/<int:pk>/',views.employee_payment_detail,name='employee_payment_detail'),path('operasional/pesanan/',views.employee_orders,name='employee_orders'),path('operasional/pesanan/<str:code>/',views.employee_order_detail,name='employee_order_detail'),
+]

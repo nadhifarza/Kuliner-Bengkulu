@@ -1,0 +1,1 @@
+{% extends 'store/admin_base.html' %}{% block title %}Form Banner{% endblock %}{% block admin_content %}<h1>Tambah / Ubah Banner</h1><form method="post" enctype="multipart/form-data" class="panel form-panel">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary">Simpan Banner</button><a class="btn btn-soft" href="{% url 'admin_banners' %}">Batal</a></form>{% endblock %}

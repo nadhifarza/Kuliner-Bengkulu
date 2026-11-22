@@ -1,0 +1,1 @@
+{% extends 'store/admin_base.html' %}{% block title %}Tambah Pegawai{% endblock %}{% block admin_content %}<h1>Buat Akun Pegawai</h1><form method="post" class="panel form-panel">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary">Buat Akun</button><a class="btn btn-soft" href="{% url 'admin_employees' %}">Batal</a></form>{% endblock %}

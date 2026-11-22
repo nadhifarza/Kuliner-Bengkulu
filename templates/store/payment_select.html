@@ -1,0 +1,28 @@
+{% extends 'store/base.html' %}
+{% load kb_filters %}
+{% block title %}Metode Pembayaran | Kuliner Bengkulu{% endblock %}
+{% block content %}
+<div class="breadcrumb">Checkout / Metode Pembayaran</div>
+<div class="narrow">
+    <h1>Pilih Pembayaran</h1>
+    <p class="muted">Pesanan {{ order.code }} · Total {{ order.total|rupiah }}</p>
+    <form method="post" class="panel">
+        {% csrf_token %}
+        <label class="payment-option">
+            <input type="radio" name="method" value="BANK_TRANSFER" {% if payment.method == 'BANK_TRANSFER' %}checked{% endif %}>
+            <span><b>Transfer Bank</b><small>Instruksi transfer belum tersedia pada mode demo.</small></span>
+            <strong>⇢</strong>
+        </label>
+        <label class="payment-option">
+            <input type="radio" name="method" value="QRIS" {% if payment.method == 'QRIS' %}checked{% endif %}>
+            <span>
+                <b>QRIS {% if demo_mode %}<em class="demo-inline-label">SIMULASI</em>{% endif %}</b>
+                <small>{% if demo_mode %}Simulasikan pembayaran untuk demonstrasi website; bukan transaksi nyata.{% else %}Pembayaran QRIS belum dikonfigurasi.{% endif %}</small>
+            </span>
+            <strong>▦</strong>
+        </label>
+        {% if demo_mode %}<p class="demo-disclaimer">Mode demo aktif. Pembayaran simulasi tidak memindahkan uang dan tidak boleh dianggap sebagai transaksi sungguhan.</p>{% endif %}
+        <button class="btn btn-primary full" type="submit">Lanjutkan</button>
+    </form>
+</div>
+{% endblock %}

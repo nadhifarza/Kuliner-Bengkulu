@@ -1,0 +1,19 @@
+KULINER BENGKULU — SVG BERURUTAN
+
+Isi paket: 48 layar inti x 2 ukuran = 96 file SVG.
+
+CARA MEMBACA
+- Urutan 01–05: autentikasi (login, registrasi, verifikasi, pemulihan password).
+- Urutan 06–28: alur pelanggan (beranda, katalog, produk, keranjang, checkout, pembayaran, pesanan, akun, notifikasi, informasi).
+- Urutan 29–41: alur admin (dashboard, produk, kategori, stok, pegawai, notifikasi, profil, banner, laporan).
+- Urutan 42–48: alur pegawai (dashboard, pemeriksaan pembayaran, pesanan, pengiriman/pickup, notifikasi).
+
+SETIAP LAYAR MEMILIKI DUA FILE YANG BERPASANGAN:
+- NN_nama_desktop.svg
+- NN_nama_mobile.svg
+
+Contoh: 06_beranda_desktop.svg dan 06_beranda_mobile.svg adalah halaman yang sama dengan tata letak responsif.
+
+Buka file berdasarkan nomor. File bernomor selanjutnya adalah layar berikutnya dalam urutan yang disusun. Seluruh artwork SVG disalin dari paket UI/UX sebelumnya tanpa mengubah fitur/isi layar. Logo pada SVG sudah tertanam (embedded), sehingga tidak perlu file gambar tambahan.
+
+Catatan: ini adalah urutan presentasi/peninjauan layar, bukan berarti seluruh layar selalu dilalui satu kali oleh setiap pengguna. Beberapa layar adalah cabang alternatif, misalnya checkout pengiriman vs pickup, pembayaran transfer vs QRIS, dan pemulihan password.

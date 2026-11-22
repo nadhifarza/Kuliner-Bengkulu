@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1718" viewBox="0 0 1400 1718">
+<rect width="100%" height="100%" fill="#FFF6E6"/>
+<text x="64" y="76" font-family="Poppins,Arial,sans-serif" font-size="34" font-weight="700" fill="#7A0E15">KULINER BENGKULU — URUTAN LAYAR UI/UX</text>
+<text x="64" y="116" font-family="Poppins,Arial,sans-serif" font-size="18" fill="#55352B">48 layar inti • masing-masing tersedia dalam Desktop dan Mobile • 96 file SVG</text>
+<rect x="64" y="148" width="1272" height="30" rx="9" fill="#7A0E15"/>
+<text x="82" y="170" font-family="Poppins,Arial,sans-serif" font-size="18" font-weight="700" fill="#FFFFFF">AUTENTIKASI</text>
+<text x="92" y="212" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">01  Masuk / Login</text>
+<text x="820" y="212" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">01_login_desktop.svg</text>
+<text x="1110" y="212" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">01_login_mobile.svg</text>
+<text x="92" y="243" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">02  Registrasi Pelanggan</text>
+<text x="820" y="243" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">02_registrasi_desktop.svg</text>
+<text x="1110" y="243" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">02_registrasi_mobile.svg</text>
+<text x="92" y="274" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">03  Verifikasi Email</text>
+<text x="820" y="274" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">03_verifikasi_email_desktop.svg</text>
+<text x="1110" y="274" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">03_verifikasi_email_mobile.svg</text>
+<text x="92" y="305" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">04  Lupa Password</text>
+<text x="820" y="305" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">04_lupa_password_desktop.svg</text>
+<text x="1110" y="305" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">04_lupa_password_mobile.svg</text>
+<text x="92" y="336" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">05  Buat Password Baru</text>
+<text x="820" y="336" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">05_reset_password_desktop.svg</text>
+<text x="1110" y="336" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">05_reset_password_mobile.svg</text>
+<rect x="64" y="345" width="1272" height="30" rx="9" fill="#C0392B"/>
+<text x="82" y="367" font-family="Poppins,Arial,sans-serif" font-size="18" font-weight="700" fill="#FFFFFF">PELANGGAN</text>
+<text x="92" y="409" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">06  Beranda Kuliner Bengkulu</text>
+<text x="820" y="409" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">06_beranda_desktop.svg</text>
+<text x="1110" y="409" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">06_beranda_mobile.svg</text>
+<text x="92" y="440" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">07  Katalog Produk</text>
+<text x="820" y="440" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">07_katalog_produk_desktop.svg</text>
+<text x="1110" y="440" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">07_katalog_produk_mobile.svg</text>
+<text x="92" y="471" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">08  Detail Produk</text>
+<text x="820" y="471" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">08_detail_produk_desktop.svg</text>
+<text x="1110" y="471" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">08_detail_produk_mobile.svg</text>
+<text x="92" y="502" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">09  Keranjang Belanja</text>
+<text x="820" y="502" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">09_keranjang_desktop.svg</text>
+<text x="1110" y="502" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">09_keranjang_mobile.svg</text>
+<text x="92" y="533" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">10  Checkout - Pengiriman</text>
+<text x="820" y="533" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">10_checkout_pengiriman_desktop.svg</text>
+<text x="1110" y="533" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">10_checkout_pengiriman_mobile.svg</text>
+<text x="92" y="564" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">11  Checkout - Ambil di Toko</text>
+<text x="820" y="564" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">11_checkout_pickup_desktop.svg</text>
+<text x="1110" y="564" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">11_checkout_pickup_mobile.svg</text>
+<text x="92" y="595" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">12  Pembayaran - Transfer Bank</text>
+<text x="820" y="595" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">12_pembayaran_transfer_desktop.svg</text>
+<text x="1110" y="595" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">12_pembayaran_transfer_mobile.svg</text>
+<text x="92" y="626" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">13  Pembayaran - QRIS</text>
+<text x="820" y="626" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">13_pembayaran_qris_desktop.svg</text>
+<text x="1110" y="626" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">13_pembayaran_qris_mobile.svg</text>
+<text x="92" y="657" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">14  Status Pembayaran</text>
+<text x="820" y="657" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">14_status_pembayaran_desktop.svg</text>
+<text x="1110" y="657" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">14_status_pembayaran_mobile.svg</text>
+<text x="92" y="688" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">15  Riwayat Pesanan</text>
+<text x="820" y="688" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">15_riwayat_pesanan_desktop.svg</text>
+<text x="1110" y="688" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">15_riwayat_pesanan_mobile.svg</text>
+<text x="92" y="719" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">16  Detail dan Pelacakan Pesanan</text>
+<text x="820" y="719" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">16_detail_pesanan_desktop.svg</text>
+<text x="1110" y="719" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">16_detail_pesanan_mobile.svg</text>
+<text x="92" y="750" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">17  Konfirmasi Pembatalan</text>
+<text x="820" y="750" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">17_pembatalan_pesanan_desktop.svg</text>
+<text x="1110" y="750" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">17_pembatalan_pesanan_mobile.svg</text>
+<text x="92" y="781" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">18  Profil Saya</text>
+<text x="820" y="781" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">18_profil_saya_desktop.svg</text>
+<text x="1110" y="781" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">18_profil_saya_mobile.svg</text>
+<text x="92" y="812" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">19  Ubah Password</text>
+<text x="820" y="812" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">19_ubah_password_desktop.svg</text>
+<text x="1110" y="812" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">19_ubah_password_mobile.svg</text>
+<text x="92" y="843" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">20  Ganti Email</text>
+<text x="820" y="843" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">20_ganti_email_desktop.svg</text>
+<text x="1110" y="843" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">20_ganti_email_mobile.svg</text>
+<text x="92" y="874" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">21  Daftar Alamat</text>
+<text x="820" y="874" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">21_daftar_alamat_desktop.svg</text>
+<text x="1110" y="874" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">21_daftar_alamat_mobile.svg</text>
+<text x="92" y="905" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">22  Tambah atau Ubah Alamat</text>
+<text x="820" y="905" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">22_form_alamat_desktop.svg</text>
+<text x="1110" y="905" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">22_form_alamat_mobile.svg</text>
+<text x="92" y="936" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">23  Pusat Notifikasi Pelanggan</text>
+<text x="820" y="936" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">23_notifikasi_pelanggan_desktop.svg</text>
+<text x="1110" y="936" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">23_notifikasi_pelanggan_mobile.svg</text>
+<text x="92" y="967" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">24  Tentang Kuliner Bengkulu</text>
+<text x="820" y="967" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">24_tentang_usaha_desktop.svg</text>
+<text x="1110" y="967" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">24_tentang_usaha_mobile.svg</text>
+<text x="92" y="998" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">25  Sejarah Usaha dan Kuliner</text>
+<text x="820" y="998" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">25_sejarah_usaha_desktop.svg</text>
+<text x="1110" y="998" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">25_sejarah_usaha_mobile.svg</text>
+<text x="92" y="1029" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">26  Kontak dan Lokasi</text>
+<text x="820" y="1029" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">26_kontak_lokasi_desktop.svg</text>
+<text x="1110" y="1029" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">26_kontak_lokasi_mobile.svg</text>
+<text x="92" y="1060" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">27  Syarat dan Ketentuan</text>
+<text x="820" y="1060" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">27_syarat_ketentuan_desktop.svg</text>
+<text x="1110" y="1060" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">27_syarat_ketentuan_mobile.svg</text>
+<text x="92" y="1091" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">28  Kebijakan Privasi</text>
+<text x="820" y="1091" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">28_kebijakan_privasi_desktop.svg</text>
+<text x="1110" y="1091" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">28_kebijakan_privasi_mobile.svg</text>
+<rect x="64" y="1100" width="1272" height="30" rx="9" fill="#A36E08"/>
+<text x="82" y="1122" font-family="Poppins,Arial,sans-serif" font-size="18" font-weight="700" fill="#FFFFFF">ADMIN</text>
+<text x="92" y="1164" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">29  Dashboard Admin</text>
+<text x="820" y="1164" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">29_dashboard_admin_desktop.svg</text>
+<text x="1110" y="1164" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">29_dashboard_admin_mobile.svg</text>
+<text x="92" y="1195" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">30  Manajemen Produk</text>
+<text x="820" y="1195" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">30_manajemen_produk_desktop.svg</text>
+<text x="1110" y="1195" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">30_manajemen_produk_mobile.svg</text>
+<text x="92" y="1226" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">31  Tambah atau Edit Produk</text>
+<text x="820" y="1226" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">31_form_produk_desktop.svg</text>
+<text x="1110" y="1226" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">31_form_produk_mobile.svg</text>
+<text x="92" y="1257" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">32  Manajemen Kategori</text>
+<text x="820" y="1257" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">32_manajemen_kategori_desktop.svg</text>
+<text x="1110" y="1257" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">32_manajemen_kategori_mobile.svg</text>
+<text x="92" y="1288" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">33  Manajemen Stok</text>
+<text x="820" y="1288" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">33_manajemen_stok_desktop.svg</text>
+<text x="1110" y="1288" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">33_manajemen_stok_mobile.svg</text>
+<text x="92" y="1319" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">34  Manajemen Akun Pegawai</text>
+<text x="820" y="1319" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">34_akun_pegawai_desktop.svg</text>
+<text x="1110" y="1319" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">34_akun_pegawai_mobile.svg</text>
+<text x="92" y="1350" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">35  Buat atau Edit Akun Pegawai</text>
+<text x="820" y="1350" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">35_form_akun_pegawai_desktop.svg</text>
+<text x="1110" y="1350" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">35_form_akun_pegawai_mobile.svg</text>
+<text x="92" y="1381" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">36  Notifikasi Admin</text>
+<text x="820" y="1381" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">36_notifikasi_admin_desktop.svg</text>
+<text x="1110" y="1381" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">36_notifikasi_admin_mobile.svg</text>
+<text x="92" y="1412" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">37  Profil Usaha dan Informasi Website</text>
+<text x="820" y="1412" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">37_profil_usaha_desktop.svg</text>
+<text x="1110" y="1412" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">37_profil_usaha_mobile.svg</text>
+<text x="92" y="1443" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">38  Manajemen Banner Website</text>
+<text x="820" y="1443" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">38_manajemen_banner_desktop.svg</text>
+<text x="1110" y="1443" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">38_manajemen_banner_mobile.svg</text>
+<text x="92" y="1474" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">39  Laporan Transaksi dan Pesanan</text>
+<text x="820" y="1474" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">39_laporan_transaksi_desktop.svg</text>
+<text x="1110" y="1474" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">39_laporan_transaksi_mobile.svg</text>
+<text x="92" y="1505" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">40  Laporan Penjualan</text>
+<text x="820" y="1505" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">40_laporan_penjualan_desktop.svg</text>
+<text x="1110" y="1505" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">40_laporan_penjualan_mobile.svg</text>
+<text x="92" y="1536" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">41  Laporan Stok</text>
+<text x="820" y="1536" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">41_laporan_stok_desktop.svg</text>
+<text x="1110" y="1536" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">41_laporan_stok_mobile.svg</text>
+<rect x="64" y="1545" width="1272" height="30" rx="9" fill="#55352B"/>
+<text x="82" y="1567" font-family="Poppins,Arial,sans-serif" font-size="18" font-weight="700" fill="#FFFFFF">PEGAWAI</text>
+<text x="92" y="1609" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">42  Dashboard Pegawai</text>
+<text x="820" y="1609" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">42_dashboard_pegawai_desktop.svg</text>
+<text x="1110" y="1609" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">42_dashboard_pegawai_mobile.svg</text>
+<text x="92" y="1640" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">43  Daftar Pemeriksaan Pembayaran</text>
+<text x="820" y="1640" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">43_daftar_pembayaran_desktop.svg</text>
+<text x="1110" y="1640" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">43_daftar_pembayaran_mobile.svg</text>
+<text x="92" y="1671" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">44  Detail Pemeriksaan Pembayaran</text>
+<text x="820" y="1671" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">44_detail_pemeriksaan_pembayaran_desktop.svg</text>
+<text x="1110" y="1671" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">44_detail_pemeriksaan_pembayaran_mobile.svg</text>
+<text x="92" y="1702" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">45  Daftar Pesanan</text>
+<text x="820" y="1702" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">45_daftar_pesanan_desktop.svg</text>
+<text x="1110" y="1702" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">45_daftar_pesanan_mobile.svg</text>
+<text x="92" y="1733" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">46  Detail dan Proses Pesanan</text>
+<text x="820" y="1733" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">46_detail_proses_pesanan_desktop.svg</text>
+<text x="1110" y="1733" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">46_detail_proses_pesanan_mobile.svg</text>
+<text x="92" y="1764" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">47  Pengiriman dan Pickup</text>
+<text x="820" y="1764" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">47_pengiriman_pickup_desktop.svg</text>
+<text x="1110" y="1764" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">47_pengiriman_pickup_mobile.svg</text>
+<text x="92" y="1795" font-family="Poppins,Arial,sans-serif" font-size="16" fill="#3F3029">48  Notifikasi Pegawai</text>
+<text x="820" y="1795" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">48_notifikasi_pegawai_desktop.svg</text>
+<text x="1110" y="1795" font-family="Poppins,Arial,sans-serif" font-size="14" fill="#7A0E15">48_notifikasi_pegawai_mobile.svg</text>
+</svg>

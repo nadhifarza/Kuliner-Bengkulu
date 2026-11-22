@@ -1,0 +1,114 @@
+
+{% extends 'store/base.html' %}
+{% load kb_filters %}
+{% load static %}
+
+{% block title %}Status Pembayaran | Kuliner Bengkulu{% endblock %}
+
+{% block content %}
+<div class="narrow">
+    <div class="status-banner">
+        <span class="status-icon">◷</span>
+        <p class="eyebrow">PEMBAYARAN PESANAN</p>
+        <h1>{{ payment.get_status_display }}</h1>
+        <p>Pesanan {{ order.code }}</p>
+    </div>
+
+    <section class="panel">
+        <div class="summary-line">
+            <span>Total Pembayaran</span>
+            <b class="detail-price">{{ order.total|rupiah }}</b>
+        </div>
+
+        <div class="summary-line">
+            <span>Metode Pembayaran</span>
+            <b>{{ payment.get_method_display }}</b>
+        </div>
+
+        <div class="summary-line">
+            <span>Batas Pembayaran</span>
+            <b>{{ payment.deadline|date:'d M Y, H:i' }} WIB</b>
+        </div>
+
+        {% if payment.status == 'PAID' %}
+            <section class="demo-qris-card demo-qris-success">
+                <h2>Pembayaran Berhasil!</h2>
+                <p>Status pembayaran pesanan kamu telah berhasil diproses.</p>
+                <p class="demo-disclaimer">
+                    Pembayaran ini merupakan simulasi sistem untuk demonstrasi website.
+                    Tidak ada uang sungguhan yang ditransfer atau diterima.
+                </p>
+            </section>
+
+        {% elif payment.status == 'WAITING' and demo_mode %}
+            <section class="demo-qris-card">
+                {% if payment.method == 'QRIS' %}
+                    <h2>Pembayaran QRIS</h2>
+                    <p>Silakan lihat ilustrasi pembayaran berikut.</p>
+
+                    <div class="demo-qr-wrap">
+                        <img src="{% static 'images/qris-demo.svg' %}"
+                             alt="Ilustrasi QR pembayaran">
+                    </div>
+
+                    <p class="demo-disclaimer">
+                        QR ini hanya ilustrasi dan tidak dapat digunakan untuk membayar.
+                    </p>
+
+                {% elif payment.method == 'BANK_TRANSFER' %}
+                    <h2>Transfer Bank</h2>
+                    <p>Informasi rekening untuk demonstrasi pembayaran.</p>
+
+                    <div class="demo-amount">
+                        <span>Bank Tujuan</span>
+                        <strong>BANK KULINER BENGKULU</strong>
+
+                        <span>Nomor Rekening</span>
+                        <strong>0000000000</strong>
+
+                        <span>Atas Nama</span>
+                        <strong>KULINER BENGKULU</strong>
+                    </div>
+                {% endif %}
+
+                <div class="demo-amount">
+                    <span>Total Pembayaran</span>
+                    <strong>{{ order.total|rupiah }}</strong>
+                </div>
+
+                <p class="demo-disclaimer">
+                    Fitur pembayaran saat ini berjalan dalam mode simulasi.
+                    Tidak ada transaksi uang sungguhan.
+                </p>
+
+                <form method="post"
+                      action="{% url 'simulate_qris_payment' order.code %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn btn-primary full"
+                            onclick="return confirm('Apakah kamu ingin menyelesaikan simulasi pembayaran?')">
+                        Konfirmasi Pembayaran
+                    </button>
+                </form>
+            </section>
+
+        {% else %}
+            <div class="gateway-note">
+                <b>Status Pembayaran: {{ payment.get_status_display }}</b>
+                <p>Silakan hubungi pengelola untuk informasi lebih lanjut.</p>
+            </div>
+        {% endif %}
+
+        {% if payment.staff_note and payment.status == 'REJECTED' %}
+            <p class="message error">
+                Catatan pengelola: {{ payment.staff_note }}
+            </p>
+        {% endif %}
+
+        <a href="{% url 'order_detail' order.code %}"
+           class="btn btn-primary full">
+            Lihat Detail Pesanan
+        </a>
+    </section>
+</div>
+{% endblock %}

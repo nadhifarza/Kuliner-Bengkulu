@@ -1,0 +1,1 @@
+{% extends 'store/base.html' %}{% block title %}Form Alamat{% endblock %}{% block content %}<div class="narrow"><div class="breadcrumb"><a href="{% url 'addresses' %}">Alamat</a> / Form</div><h1>Tambah / Ubah Alamat</h1><form method="post" class="panel">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary">Simpan Alamat</button></form></div>{% endblock %}

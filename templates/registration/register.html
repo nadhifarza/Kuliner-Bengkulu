@@ -1,0 +1,76 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Registrasi | Kuliner Bengkulu{% endblock %}
+
+{% block content %}
+
+<section class="auth-wrap single">
+    <div class="auth-card wide">
+
+        <img
+            class="auth-logo"
+            src="{% static 'images/logo_kuliner_bengkulu.jpg' %}"
+            alt="Logo Kuliner Bengkulu"
+        >
+
+        <p class="eyebrow">BUAT AKUN BARU</p>
+
+        <h1>Daftar pelanggan</h1>
+
+        <p class="muted">
+            Isi data berikut untuk membuat akun Kuliner Bengkulu.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.non_field_errors }}
+
+            <div class="form-grid">
+
+                <label>
+                    Nama lengkap
+                    {{ form.first_name }}
+                </label>
+
+                <label>
+                    Email
+                    {{ form.email }}
+                </label>
+
+                <label>
+                    Nomor telepon
+                    {{ form.phone }}
+                </label>
+
+                <label>
+                    Password
+                    {{ form.password }}
+                </label>
+
+                <label class="span-2">
+                    Alamat pertama
+                    {{ form.address }}
+                </label>
+
+            </div>
+
+            <button
+                type="submit"
+                class="btn btn-primary full"
+            >
+                Daftar Sekarang
+            </button>
+
+        </form>
+
+        <p class="center muted">
+            Sudah punya akun?
+            <a href="{% url 'login' %}">Masuk</a>
+        </p>
+
+    </div>
+</section>
+
+{% endblock %}
