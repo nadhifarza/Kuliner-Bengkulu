@@ -48,11 +48,18 @@ class Product(models.Model):
     def __str__(self): return self.name
     @property
     def is_purchasable(self): return self.is_active and self.price is not None and self.price > 0 and self.stock > 0
-    @property
-    def photo_url(self):
-        if self.image: return self.image.url
-        if self.image_path: return '/static/images/products/'+self.image_path
-        return '/static/images/placeholder-food.svg'
+@property
+def photo_url(self):
+    if self.image:
+        return self.image.url
+
+    if self.image_path:
+        path = self.image_path.replace("\\", "/").lstrip("/")
+        if path.startswith("products/"):
+            path = path[len("products/"):]
+        return f"/static/images/products/{path}"
+
+    return "/static/images/placeholder-food.svg"
 
 class Cart(models.Model):
     customer=models.OneToOneField(User,on_delete=models.CASCADE,related_name='cart')
