@@ -1,47 +1,86 @@
-import json, hmac, hashlib, uuid
+
+import json
+import hmac
+import hashlib
+import uuid
+
 from datetime import timedelta, date
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.tokens import default_token_generator
 from django.core import signing
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Sum,Count,Q
+from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
-from django.shortcuts import render,redirect,get_object_or_404
-from django.template.loader import render_to_string
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
-from django.utils.encoding import force_bytes,force_str
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+
 from .models import *
 from .forms import *
-from .utils import rupiah,notify,expire_pending_orders
+from .utils import rupiah, notify, expire_pending_orders
 
-User=get_user_model()
+
+User = get_user_model()
+
+
+# ==========================================================
+# ROLE DAN HELPER
+# ==========================================================
 
 def role_required(*roles):
     def deco(view):
-        def wrapped(request,*args,**kwargs):
-            if not request.user.is_authenticated: return redirect('login')
-            if request.user.is_superuser or request.user.role=='ADMIN':
-                if 'ADMIN' in roles: return view(request,*args,**kwargs)
-            if request.user.role not in roles: return HttpResponseForbidden('Anda tidak memiliki hak akses untuk halaman ini.')
-            return view(request,*args,**kwargs)
+        def wrapped(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+
+            if request.user.is_superuser or request.user.role == 'ADMIN':
+                if 'ADMIN' in roles:
+                    return view(request, *args, **kwargs)
+
+            if request.user.role not in roles:
+                return HttpResponseForbidden(
+                    'Anda tidak memiliki hak akses untuk halaman ini.'
+                )
+
+            return view(request, *args, **kwargs)
+
         return wrapped
     return deco
 
-def active_customer(view): return role_required('CUSTOMER')(view)
-def money_context(ctx): ctx['rupiah']=rupiah; return ctx
+
+def active_customer(view):
+    return role_required('CUSTOMER')(view)
+
+
+def money_context(ctx):
+    ctx['rupiah'] = rupiah
+    return ctx
+
+
+# ==========================================================
+# AUTHENTICATION
+# ==========================================================
 
 def login_view(request):
-    if request.user.is_authenticated: return redirect('role_home')
-    form=LoginForm(request.POST or None,request=request)
-    if request.method=='POST' and form.is_valid(): login(request,form.user); return redirect('role_home')
-    return render(request,'registration/login.html',{'form':form})
+    if request.user.is_authenticated:
+        return redirect('role_home')
+
+    form = LoginForm(request.POST or None, request=request)
+
+    if request.method == 'POST' and form.is_valid():
+        login(request, form.user)
+        return redirect('role_home')
+
+    return render(
+        request,
+        'registration/login.html',
+        {'form': form}
+    )
 
 
 def register_view(request):
@@ -66,485 +105,1550 @@ def register_view(request):
         'registration/register.html',
         {'form': form}
     )
-def verify_email(request,token):
+
+
+def verify_email(request, token):
     try:
-        data=signing.loads(token,salt='kb-email-verify',max_age=60*60*24)
-        user=User.objects.get(pk=data['uid']); user.email_verified=True; user.save(update_fields=['email_verified'])
-        messages.success(request,'Email berhasil diverifikasi. Silakan login.')
-    except Exception: messages.error(request,'Tautan verifikasi tidak valid atau sudah kedaluwarsa.')
+        data = signing.loads(
+            token,
+            salt='kb-email-verify',
+            max_age=60 * 60 * 24
+        )
+
+        user = User.objects.get(pk=data['uid'])
+        user.email_verified = True
+        user.save(update_fields=['email_verified'])
+
+        messages.success(
+            request,
+            'Email berhasil diverifikasi. Silakan login.'
+        )
+
+    except Exception:
+        messages.error(
+            request,
+            'Tautan verifikasi tidak valid atau sudah kedaluwarsa.'
+        )
+
     return redirect('login')
+
 
 @login_required
 def role_home(request):
-    if request.user.is_superuser or request.user.role=='ADMIN': return redirect('admin_dashboard')
-    if request.user.role=='EMPLOYEE': return redirect('employee_dashboard')
+    if request.user.is_superuser or request.user.role == 'ADMIN':
+        return redirect('admin_dashboard')
+
+    if request.user.role == 'EMPLOYEE':
+        return redirect('employee_dashboard')
+
     return redirect('home')
 
-@active_customer
+
+# ==========================================================
+# PUBLIC WEBSITE
+# Beranda, katalog, dan detail dapat diakses tanpa login
+# ==========================================================
+
 def home(request):
     expire_pending_orders()
-    products=Product.objects.filter(is_active=True).select_related('category')[:8]
-    categories=Category.objects.all()
-    banners=Banner.objects.filter(is_active=True)
-    return render(request,'store/home.html',money_context({'products':products,'categories':categories,'banners':banners,'active_nav':'home'}))
 
-@active_customer
+    products = Product.objects.filter(
+        is_active=True
+    ).select_related('category')[:8]
+
+    categories = Category.objects.all()
+    banners = Banner.objects.filter(is_active=True)
+
+    context = {
+        'products': products,
+        'categories': categories,
+        'banners': banners,
+        'active_nav': 'home'
+    }
+
+    return render(
+        request,
+        'store/home.html',
+        money_context(context)
+    )
+
+
 def catalog(request):
     expire_pending_orders()
-    qs=Product.objects.filter(is_active=True).select_related('category')
-    q=request.GET.get('q','').strip(); category=request.GET.get('kategori','')
-    if q: qs=qs.filter(name__icontains=q)
-    if category: qs=qs.filter(category__slug=category)
-    return render(request,'store/catalog.html',money_context({'products':qs,'categories':Category.objects.all(),'q':q,'selected_category':category,'active_nav':'catalog'}))
 
-@active_customer
-def product_detail(request,slug):
-    product=get_object_or_404(Product,is_active=True,slug=slug)
-    return render(request,'store/product_detail.html',money_context({'product':product,'active_nav':'catalog'}))
+    qs = Product.objects.filter(
+        is_active=True
+    ).select_related('category')
+
+    q = request.GET.get('q', '').strip()
+    category = request.GET.get('kategori', '')
+
+    if q:
+        qs = qs.filter(name__icontains=q)
+
+    if category:
+        qs = qs.filter(category__slug=category)
+
+    context = {
+        'products': qs,
+        'categories': Category.objects.all(),
+        'q': q,
+        'selected_category': category,
+        'active_nav': 'catalog'
+    }
+
+    return render(
+        request,
+        'store/catalog.html',
+        money_context(context)
+    )
+
+
+def product_detail(request, slug):
+    product = get_object_or_404(
+        Product,
+        is_active=True,
+        slug=slug
+    )
+
+    context = {
+        'product': product,
+        'active_nav': 'catalog'
+    }
+
+    return render(
+        request,
+        'store/product_detail.html',
+        money_context(context)
+    )
+
+
+# ==========================================================
+# CART
+# ==========================================================
 
 @active_customer
 @require_POST
-def add_to_cart(request,product_id):
-    if request.user.role!='CUSTOMER': return HttpResponseForbidden()
-    product=get_object_or_404(Product,pk=product_id,is_active=True)
+def add_to_cart(request, product_id):
+    if request.user.role != 'CUSTOMER':
+        return HttpResponseForbidden()
+
+    product = get_object_or_404(
+        Product,
+        pk=product_id,
+        is_active=True
+    )
+
     if not product.is_purchasable:
-        messages.error(request,'Produk belum memiliki harga atau stok tersedia. Silakan hubungi pengelola toko.')
-        return redirect('product_detail',slug=product.slug)
-    cart,_=Cart.objects.get_or_create(customer=request.user)
-    item,created=CartItem.objects.get_or_create(cart=cart,product=product,defaults={'quantity':1})
-    if not created: item.quantity=min(item.quantity+1,product.stock); item.save(update_fields=['quantity'])
-    messages.success(request,f'{product.name} ditambahkan ke keranjang.')
+        messages.error(
+            request,
+            'Produk belum memiliki harga atau stok tersedia. Silakan hubungi pengelola toko.'
+        )
+        return redirect('product_detail', slug=product.slug)
+
+    cart, _ = Cart.objects.get_or_create(
+        customer=request.user
+    )
+
+    item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        defaults={'quantity': 1}
+    )
+
+    if not created:
+        item.quantity = min(
+            item.quantity + 1,
+            product.stock
+        )
+        item.save(update_fields=['quantity'])
+
+    messages.success(
+        request,
+        f'{product.name} ditambahkan ke keranjang.'
+    )
+
     return redirect(request.POST.get('next') or 'catalog')
+
 
 @active_customer
 def cart_view(request):
-    cart,_=Cart.objects.get_or_create(customer=request.user)
-    return render(request,'store/cart.html',money_context({'cart':cart,'items':cart.items.select_related('product')}))
+    cart, _ = Cart.objects.get_or_create(
+        customer=request.user
+    )
+
+    return render(
+        request,
+        'store/cart.html',
+        money_context({
+            'cart': cart,
+            'items': cart.items.select_related('product')
+        })
+    )
+
 
 @active_customer
 @require_POST
-def update_cart_item(request,item_id):
-    item=get_object_or_404(CartItem,pk=item_id,cart__customer=request.user)
-    action=request.POST.get('action')
-    if action=='delete': item.delete()
+def update_cart_item(request, item_id):
+    item = get_object_or_404(
+        CartItem,
+        pk=item_id,
+        cart__customer=request.user
+    )
+
+    action = request.POST.get('action')
+
+    if action == 'delete':
+        item.delete()
+
     else:
-        try: qty=int(request.POST.get('quantity',item.quantity))
-        except ValueError: qty=item.quantity
-        if qty<1: item.delete()
-        else: item.quantity=min(qty,item.product.stock); item.note=request.POST.get('note','')[:240]; item.save()
+        try:
+            qty = int(
+                request.POST.get('quantity', item.quantity)
+            )
+        except ValueError:
+            qty = item.quantity
+
+        if qty < 1:
+            item.delete()
+        else:
+            item.quantity = min(qty, item.product.stock)
+            item.note = request.POST.get('note', '')[:240]
+            item.save()
+
     return redirect('cart')
+
+
+# ==========================================================
+# CHECKOUT
+# ==========================================================
 
 @active_customer
 def checkout(request):
-    cart,_=Cart.objects.get_or_create(customer=request.user)
-    items=list(cart.items.select_related('product','product__category'))
-    if not items: messages.info(request,'Keranjang masih kosong.'); return redirect('catalog')
-    addresses=request.user.addresses.all()
-    if request.method=='POST':
-        fulfillment=request.POST.get('fulfillment')
-        address=None
-        if fulfillment=='DELIVERY':
-            
+    cart, _ = Cart.objects.get_or_create(
+        customer=request.user
+    )
+
+    items = list(
+        cart.items.select_related(
+            'product',
+            'product__category'
+        )
+    )
+
+    if not items:
+        messages.info(request, 'Keranjang masih kosong.')
+        return redirect('catalog')
+
+    addresses = request.user.addresses.all()
+
+    if request.method == 'POST':
+        fulfillment = request.POST.get('fulfillment')
+        address = None
+
+        if fulfillment == 'DELIVERY':
             if not addresses.exists():
-                messages.error(request,'Tambahkan alamat pengiriman terlebih dahulu.')
+                messages.error(
+                    request,
+                    'Tambahkan alamat pengiriman terlebih dahulu.'
+                )
                 return redirect('address_add')
-            address=get_object_or_404(Address,pk=request.POST.get('address_id'),user=request.user)
-        if fulfillment not in ('DELIVERY','PICKUP'): messages.error(request,'Pilih metode penerimaan.'); return redirect('checkout')
+
+            address = get_object_or_404(
+                Address,
+                pk=request.POST.get('address_id'),
+                user=request.user
+            )
+
+        if fulfillment not in ('DELIVERY', 'PICKUP'):
+            messages.error(
+                request,
+                'Pilih metode penerimaan.'
+            )
+            return redirect('checkout')
+
         with transaction.atomic():
-            locked=[]; subtotal=0
+            locked = []
+            subtotal = 0
+
             for item in items:
-                p=Product.objects.select_for_update().get(pk=item.product_id)
-                if not p.is_purchasable or item.quantity>p.stock:
-                    messages.error(request,f'Stok {p.name} berubah. Periksa kembali keranjang.'); return redirect('cart')
-                subtotal+=p.price*item.quantity; locked.append((item,p))
-            order=Order.objects.create(customer=request.user,code='KB-'+timezone.now().strftime('%y%m%d')+'-'+uuid.uuid4().hex[:6].upper(),fulfillment=fulfillment,
-                recipient=address.recipient if address else request.user.first_name,recipient_phone=address.phone if address else request.user.phone,
-                delivery_address=address.address if address else '',customer_note=request.POST.get('customer_note','')[:500],subtotal=subtotal,shipping_fee=0,total=subtotal)
-            for item,p in locked:
-                OrderItem.objects.create(order=order,product=p,product_name=p.name,unit_price=p.price,quantity=item.quantity,note=item.note)
-                p.stock-=item.quantity; p.save(update_fields=['stock'])
-                if p.stock<=10:
-                    for admin_user in User.objects.filter(Q(role='ADMIN')|Q(is_superuser=True)):
-                        notify(admin_user,'Stok menipis',f'Stok {p.name} tersisa {p.stock}.','STOCK')
+                p = Product.objects.select_for_update().get(
+                    pk=item.product_id
+                )
+
+                if not p.is_purchasable or item.quantity > p.stock:
+                    messages.error(
+                        request,
+                        f'Stok {p.name} berubah. Periksa kembali keranjang.'
+                    )
+                    return redirect('cart')
+
+                subtotal += p.price * item.quantity
+                locked.append((item, p))
+
+            order = Order.objects.create(
+                customer=request.user,
+                code='KB-' + timezone.now().strftime('%y%m%d') + '-' + uuid.uuid4().hex[:6].upper(),
+                fulfillment=fulfillment,
+                recipient=address.recipient if address else request.user.first_name,
+                recipient_phone=address.phone if address else request.user.phone,
+                delivery_address=address.address if address else '',
+                customer_note=request.POST.get('customer_note', '')[:500],
+                subtotal=subtotal,
+                shipping_fee=0,
+                total=subtotal
+            )
+
+            for item, p in locked:
+                OrderItem.objects.create(
+                    order=order,
+                    product=p,
+                    product_name=p.name,
+                    unit_price=p.price,
+                    quantity=item.quantity,
+                    note=item.note
+                )
+
+                p.stock -= item.quantity
+                p.save(update_fields=['stock'])
+
+                if p.stock <= 10:
+                    for admin_user in User.objects.filter(
+                        Q(role='ADMIN') | Q(is_superuser=True)
+                    ):
+                        notify(
+                            admin_user,
+                            'Stok menipis',
+                            f'Stok {p.name} tersisa {p.stock}.',
+                            'STOCK'
+                        )
+
             cart.items.all().delete()
-            Payment.objects.create(order=order,method='BANK_TRANSFER',amount=order.total,deadline=timezone.now()+timedelta(minutes=30))
+
+            Payment.objects.create(
+                order=order,
+                method='BANK_TRANSFER',
+                amount=order.total,
+                deadline=timezone.now() + timedelta(minutes=30)
+            )
+
             for employee in User.objects.filter(role='EMPLOYEE'):
-                notify(employee,'Pesanan baru',f'Pesanan {order.code} menunggu pembayaran.','ORDER',order)
-        return redirect('payment_select',code=order.code)
-    return render(request,'store/checkout.html',money_context({'items':items,'addresses':addresses,'subtotal':cart.total()}))
+                notify(
+                    employee,
+                    'Pesanan baru',
+                    f'Pesanan {order.code} menunggu pembayaran.',
+                    'ORDER',
+                    order
+                )
+
+        return redirect('payment_select', code=order.code)
+
+    return render(
+        request,
+        'store/checkout.html',
+        money_context({
+            'items': items,
+            'addresses': addresses,
+            'subtotal': cart.total()
+        })
+    )
+
+
+# ==========================================================
+# PAYMENT
+# ==========================================================
 
 @active_customer
-def payment_select(request,code):
-    order=get_object_or_404(Order,code=code,customer=request.user)
-    payment=order.payment
-    if request.method=='POST':
-        method=request.POST.get('method')
-        if method in ['BANK_TRANSFER','QRIS'] and payment.status=='WAITING':
-            payment.method=method; payment.save(update_fields=['method'])
-            return redirect('payment_detail',code=code)
-    return render(request,'store/payment_select.html',{'order':order,'payment':payment,'demo_mode':settings.PAYMENT_DEMO_MODE})
+def payment_select(request, code):
+    order = get_object_or_404(
+        Order,
+        code=code,
+        customer=request.user
+    )
+
+    payment = order.payment
+
+    if request.method == 'POST':
+        method = request.POST.get('method')
+
+        if method in ['BANK_TRANSFER', 'QRIS'] and payment.status == 'WAITING':
+            payment.method = method
+            payment.save(update_fields=['method'])
+
+            return redirect('payment_detail', code=code)
+
+    return render(
+        request,
+        'store/payment_select.html',
+        {
+            'order': order,
+            'payment': payment,
+            'demo_mode': settings.PAYMENT_DEMO_MODE
+        }
+    )
+
 
 @active_customer
-def payment_detail(request,code):
-    order=get_object_or_404(Order,code=code,customer=request.user)
-    return render(request,'store/payment_detail.html',money_context({
-        'order':order,
-        'payment':order.payment,
-        'gateway_ready':bool(settings.PAYMENT_GATEWAY_NAME),
-        'demo_mode':settings.PAYMENT_DEMO_MODE,
-    }))
+def payment_detail(request, code):
+    order = get_object_or_404(
+        Order,
+        code=code,
+        customer=request.user
+    )
+
+    return render(
+        request,
+        'store/payment_detail.html',
+        money_context({
+            'order': order,
+            'payment': order.payment,
+            'gateway_ready': bool(settings.PAYMENT_GATEWAY_NAME),
+            'demo_mode': settings.PAYMENT_DEMO_MODE
+        })
+    )
 
 
 @active_customer
 @require_POST
-def simulate_qris_payment(request,code):
-    """Demo-only QRIS action. Never represents or confirms a real money transfer."""
-    if not settings.PAYMENT_DEMO_MODE:
-        return HttpResponseForbidden('Mode simulasi pembayaran sedang dinonaktifkan.')
+def simulate_qris_payment(request, code):
+    """Pembayaran DEMO, bukan transaksi uang sungguhan."""
 
-    # Run the normal expiry routine before accepting a demo payment.
+    if not settings.PAYMENT_DEMO_MODE:
+        return HttpResponseForbidden(
+            'Mode simulasi pembayaran sedang dinonaktifkan.'
+        )
+
     expire_pending_orders()
 
     with transaction.atomic():
-        order=get_object_or_404(
+        order = get_object_or_404(
             Order.objects.select_for_update(),
             code=code,
-            customer=request.user,
+            customer=request.user
         )
-        payment=get_object_or_404(Payment.objects.select_for_update(),order=order)
+
+        payment = get_object_or_404(
+            Payment.objects.select_for_update(),
+            order=order
+        )
 
         if payment.method not in ['QRIS', 'BANK_TRANSFER']:
-            messages.error(request, 'Metode pembayaran tidak tersedia untuk simulasi.')
+            messages.error(
+                request,
+                'Metode pembayaran tidak tersedia untuk simulasi.'
+            )
             return redirect('payment_detail', code=code)
 
         if payment.status == 'PAID' and payment.gateway_status == 'DEMO_SIMULATED':
-            messages.info(request, 'Pembayaran sudah berhasil disimulasikan.')
+            messages.info(
+                request,
+                'Pembayaran sudah berhasil disimulasikan.'
+            )
             return redirect('payment_detail', code=code)
 
         if payment.status != 'WAITING':
-            messages.error(request, 'Pesanan tidak lagi menunggu pembayaran.')
+            messages.error(
+                request,
+                'Pesanan tidak lagi menunggu pembayaran.'
+            )
             return redirect('payment_detail', code=code)
 
-    # Proses perubahan status pembayaran berada di sini
-
         if payment.deadline and payment.deadline <= timezone.now():
-            messages.error(request,'Batas pembayaran sudah berakhir. Silakan buat pesanan baru atau hubungi pengelola.')
-            return redirect('payment_detail',code=code)
+            messages.error(
+                request,
+                'Batas pembayaran sudah berakhir. Silakan buat pesanan baru atau hubungi pengelola.'
+            )
+            return redirect('payment_detail', code=code)
 
-        now=timezone.now()
-        payment.status='PAID'
-        payment.gateway_status='DEMO_SIMULATED'
-        payment.gateway_transaction_id='DEMO-'+uuid.uuid4().hex[:12].upper()
-        payment.verified_by=None
-        payment.verified_at=now
-        payment.staff_note='SIMULASI DEMO: tidak ada transaksi atau perpindahan uang sungguhan.'
+        now = timezone.now()
+
+        payment.status = 'PAID'
+        payment.gateway_status = 'DEMO_SIMULATED'
+        payment.gateway_transaction_id = 'DEMO-' + uuid.uuid4().hex[:12].upper()
+        payment.verified_by = None
+        payment.verified_at = now
+        payment.staff_note = 'SIMULASI DEMO: tidak ada transaksi atau perpindahan uang sungguhan.'
+
         payment.save(update_fields=[
-            'status','gateway_status','gateway_transaction_id',
-            'verified_by','verified_at','staff_note'
+            'status',
+            'gateway_status',
+            'gateway_transaction_id',
+            'verified_by',
+            'verified_at',
+            'staff_note'
         ])
 
-        order.status='WAITING_CONFIRMATION'
-        order.save(update_fields=['status','updated_at'])
+        order.status = 'WAITING_CONFIRMATION'
+        order.save(update_fields=['status', 'updated_at'])
 
         notify(
             order.customer,
             'Pembayaran simulasi berhasil',
             f'Pembayaran DEMO untuk pesanan {order.code} berhasil disimulasikan. Tidak ada uang sungguhan yang ditransfer.',
             'PAYMENT',
-            order,
+            order
         )
-        staff_users=User.objects.filter(
-            Q(role__in=['ADMIN','EMPLOYEE']) | Q(is_superuser=True)
+
+        staff_users = User.objects.filter(
+            Q(role__in=['ADMIN', 'EMPLOYEE']) | Q(is_superuser=True)
         ).distinct()
+
         for staff_user in staff_users:
             notify(
                 staff_user,
                 'Pembayaran DEMO baru',
                 f'Pesanan {order.code} telah melewati simulasi pembayaran. Bukan transaksi nyata.',
                 'PAYMENT',
-                order,
+                order
             )
 
-    messages.success(request, 'Simulasi pembayaran berhasil. Ini hanya transaksi DEMO, bukan pembayaran sungguhan.')
-    return redirect('payment_detail',code=code)
+    messages.success(
+        request,
+        'Simulasi pembayaran berhasil. Ini hanya transaksi DEMO, bukan pembayaran sungguhan.'
+    )
 
+    return redirect('payment_detail', code=code)
+
+
+# ==========================================================
+# ORDER HISTORY
+# ==========================================================
 
 @active_customer
 def order_history(request):
-    orders=request.user.orders.select_related('payment').prefetch_related('items')
-    return render(request,'store/order_history.html',{'orders':orders})
+    orders = request.user.orders.select_related(
+        'payment'
+    ).prefetch_related('items')
+
+    return render(
+        request,
+        'store/order_history.html',
+        {'orders': orders}
+    )
+
 
 @active_customer
-def order_detail(request,code):
-    order=get_object_or_404(Order,code=code,customer=request.user)
-    return render(request,'store/order_detail.html',{'order':order,'payment':order.payment})
+def order_detail(request, code):
+    order = get_object_or_404(
+        Order,
+        code=code,
+        customer=request.user
+    )
+
+    return render(
+        request,
+        'store/order_detail.html',
+        {
+            'order': order,
+            'payment': order.payment
+        }
+    )
+
 
 @active_customer
 @require_POST
-def cancel_order(request,code):
+def cancel_order(request, code):
     with transaction.atomic():
-        order=get_object_or_404(Order.objects.select_for_update(),code=code,customer=request.user)
-        if order.status in ['PROCESSING','READY','COMPLETED','CANCELLED']:
-            messages.error(request,'Pesanan tidak dapat dibatalkan pada tahap ini.')
+        order = get_object_or_404(
+            Order.objects.select_for_update(),
+            code=code,
+            customer=request.user
+        )
+
+        if order.status in [
+            'PROCESSING',
+            'READY',
+            'COMPLETED',
+            'CANCELLED'
+        ]:
+            messages.error(
+                request,
+                'Pesanan tidak dapat dibatalkan pada tahap ini.'
+            )
+
         else:
-            order.status='CANCELLED'; order.save(update_fields=['status','updated_at'])
+            order.status = 'CANCELLED'
+            order.save(update_fields=['status', 'updated_at'])
+
             for line in order.items.select_related('product'):
-                p=Product.objects.select_for_update().get(pk=line.product_id); p.stock+=line.quantity; p.save(update_fields=['stock'])
-            if hasattr(order,'payment') and order.payment.status in ['WAITING','DETECTED','REVIEW']:
-                order.payment.status='REJECTED'; order.payment.staff_note='Pesanan dibatalkan oleh pelanggan.'; order.payment.save()
-            notify(request.user,'Pesanan dibatalkan',f'Pesanan {order.code} telah dibatalkan.','ORDER',order)
-            messages.success(request,'Pesanan dibatalkan. Jika pembayaran sudah berhasil, pengembalian dana mengikuti prosedur toko.')
-    return redirect('order_detail',code=code)
+                p = Product.objects.select_for_update().get(
+                    pk=line.product_id
+                )
+                p.stock += line.quantity
+                p.save(update_fields=['stock'])
+
+            if hasattr(order, 'payment') and order.payment.status in [
+                'WAITING',
+                'DETECTED',
+                'REVIEW'
+            ]:
+                order.payment.status = 'REJECTED'
+                order.payment.staff_note = 'Pesanan dibatalkan oleh pelanggan.'
+                order.payment.save()
+
+            notify(
+                request.user,
+                'Pesanan dibatalkan',
+                f'Pesanan {order.code} telah dibatalkan.',
+                'ORDER',
+                order
+            )
+
+            messages.success(
+                request,
+                'Pesanan dibatalkan. Jika pembayaran sudah berhasil, pengembalian dana mengikuti prosedur toko.'
+            )
+
+    return redirect('order_detail', code=code)
+
+
+# ==========================================================
+# CUSTOMER PROFILE AND ADDRESS
+# ==========================================================
 
 @active_customer
 def profile(request):
-    if request.method=='POST':
-        request.user.first_name=request.POST.get('first_name','').strip(); request.user.phone=request.POST.get('phone','').strip(); request.user.save()
-        messages.success(request,'Profil berhasil diperbarui.'); return redirect('profile')
-    return render(request,'store/profile.html')
+    if request.method == 'POST':
+        request.user.first_name = request.POST.get('first_name', '').strip()
+        request.user.phone = request.POST.get('phone', '').strip()
+        request.user.save()
+
+        messages.success(
+            request,
+            'Profil berhasil diperbarui.'
+        )
+
+        return redirect('profile')
+
+    return render(request, 'store/profile.html')
+
 
 @active_customer
-def address_list(request): return render(request,'store/address_list.html',{'addresses':request.user.addresses.all()})
+def address_list(request):
+    return render(
+        request,
+        'store/address_list.html',
+        {'addresses': request.user.addresses.all()}
+    )
+
+
 @active_customer
-def address_form(request,pk=None):
-    obj=get_object_or_404(Address,pk=pk,user=request.user) if pk else None
-    form=AddressForm(request.POST or None,instance=obj)
-    if request.method=='POST' and form.is_valid():
-        a=form.save(commit=False); a.user=request.user
-        if not request.user.addresses.exists(): a.is_default=True
+def address_form(request, pk=None):
+    obj = get_object_or_404(
+        Address,
+        pk=pk,
+        user=request.user
+    ) if pk else None
+
+    form = AddressForm(
+        request.POST or None,
+        instance=obj
+    )
+
+    if request.method == 'POST' and form.is_valid():
+        a = form.save(commit=False)
+        a.user = request.user
+
+        if not request.user.addresses.exists():
+            a.is_default = True
+
         a.save()
-        if a.is_default: request.user.addresses.exclude(pk=a.pk).update(is_default=False)
-        messages.success(request,'Alamat tersimpan.'); return redirect('addresses')
-    return render(request,'store/address_form.html',{'form':form})
+
+        if a.is_default:
+            request.user.addresses.exclude(
+                pk=a.pk
+            ).update(is_default=False)
+
+        messages.success(request, 'Alamat tersimpan.')
+        return redirect('addresses')
+
+    return render(
+        request,
+        'store/address_form.html',
+        {'form': form}
+    )
+
+
 @active_customer
 @require_POST
-def address_delete(request,pk):
-    a=get_object_or_404(Address,pk=pk,user=request.user); was_default=a.is_default; a.delete()
+def address_delete(request, pk):
+    a = get_object_or_404(
+        Address,
+        pk=pk,
+        user=request.user
+    )
+
+    was_default = a.is_default
+    a.delete()
+
     if was_default:
-        next_a=request.user.addresses.first()
-        if next_a: next_a.is_default=True; next_a.save(update_fields=['is_default'])
+        next_a = request.user.addresses.first()
+
+        if next_a:
+            next_a.is_default = True
+            next_a.save(update_fields=['is_default'])
+
     return redirect('addresses')
+
+
+# ==========================================================
+# NOTIFICATIONS AND INFORMATION
+# ==========================================================
 
 @login_required
 def notifications(request):
-    if request.method=='POST': request.user.notifications.filter(is_read=False).update(is_read=True)
-    return render(request,'store/notifications.html',{'notifications':request.user.notifications.all()})
+    if request.method == 'POST':
+        request.user.notifications.filter(
+            is_read=False
+        ).update(is_read=True)
+
+    return render(
+        request,
+        'store/notifications.html',
+        {'notifications': request.user.notifications.all()}
+    )
+
 
 @login_required
-def info_page(request,slug):
-    allowed={'about':'Tentang Usaha','history':'Sejarah Usaha dan Kuliner','contact':'Kontak dan Lokasi','terms':'Syarat dan Ketentuan','privacy':'Kebijakan Privasi'}
-    if slug not in allowed: return redirect('home')
-    return render(request,'store/info_page.html',{'slug':slug,'title':allowed[slug]})
+def info_page(request, slug):
+    allowed = {
+        'about': 'Tentang Usaha',
+        'history': 'Sejarah Usaha dan Kuliner',
+        'contact': 'Kontak dan Lokasi',
+        'terms': 'Syarat dan Ketentuan',
+        'privacy': 'Kebijakan Privasi'
+    }
 
-# Admin area
+    if slug not in allowed:
+        return redirect('home')
+
+    return render(
+        request,
+        'store/info_page.html',
+        {
+            'slug': slug,
+            'title': allowed[slug]
+        }
+    )
+
+
+# ==========================================================
+# ADMIN AREA
+# ==========================================================
+
 @role_required('ADMIN')
 def admin_dashboard(request):
     expire_pending_orders()
-    today=timezone.localdate()
-    orders=Order.objects.all()
-    weekly_sales=[]
-    paid_orders=orders.filter(payment__status='PAID').exclude(status='CANCELLED')
-    for offset in range(3,-1,-1):
-        week_start=today-timedelta(days=today.weekday()+7*offset)
-        week_end=week_start+timedelta(days=7)
-        value=paid_orders.filter(created_at__date__gte=week_start,created_at__date__lt=week_end).aggregate(v=Sum('total'))['v'] or 0
-        weekly_sales.append({'label':f'{week_start.day}/{week_start.month}','value':value})
-    max_value=max([x['value'] for x in weekly_sales] or [1]) or 1
-    for item in weekly_sales: item['bar_width']=max(4,round(item['value']/max_value*100))
-    context={'active_admin':'dashboard','sales':paid_orders.aggregate(v=Sum('total'))['v'] or 0,'today':today,'weekly_sales':weekly_sales,
-        'orders_count':orders.count(),'waiting':orders.filter(status__in=['WAITING_PAYMENT','WAITING_CONFIRMATION']).count(),
-        'processing':orders.filter(status='PROCESSING').count(),'completed':orders.filter(status='COMPLETED').count(),
-        'low_stock':Product.objects.filter(is_active=True,stock__lte=10).count(),
-        'recent_orders':orders.select_related('customer').order_by('-created_at')[:7]}
-    return render(request,'store/admin_dashboard.html',money_context(context))
+
+    today = timezone.localdate()
+    orders = Order.objects.all()
+    weekly_sales = []
+
+    paid_orders = orders.filter(
+        payment__status='PAID'
+    ).exclude(status='CANCELLED')
+
+    for offset in range(3, -1, -1):
+        week_start = today - timedelta(
+            days=today.weekday() + 7 * offset
+        )
+
+        week_end = week_start + timedelta(days=7)
+
+        value = paid_orders.filter(
+            created_at__date__gte=week_start,
+            created_at__date__lt=week_end
+        ).aggregate(v=Sum('total'))['v'] or 0
+
+        weekly_sales.append({
+            'label': f'{week_start.day}/{week_start.month}',
+            'value': value
+        })
+
+    max_value = max(
+        [x['value'] for x in weekly_sales] or [1]
+    ) or 1
+
+    for item in weekly_sales:
+        item['bar_width'] = max(
+            4,
+            round(item['value'] / max_value * 100)
+        )
+
+    context = {
+        'active_admin': 'dashboard',
+        'sales': paid_orders.aggregate(v=Sum('total'))['v'] or 0,
+        'today': today,
+        'weekly_sales': weekly_sales,
+        'orders_count': orders.count(),
+        'waiting': orders.filter(
+            status__in=['WAITING_PAYMENT', 'WAITING_CONFIRMATION']
+        ).count(),
+        'processing': orders.filter(status='PROCESSING').count(),
+        'completed': orders.filter(status='COMPLETED').count(),
+        'low_stock': Product.objects.filter(
+            is_active=True,
+            stock__lte=10
+        ).count(),
+        'recent_orders': orders.select_related(
+            'customer'
+        ).order_by('-created_at')[:7]
+    }
+
+    return render(
+        request,
+        'store/admin_dashboard.html',
+        money_context(context)
+    )
+
 
 @role_required('ADMIN')
-def admin_products(request): return render(request,'store/admin_products.html',{'products':Product.objects.select_related('category'),'active_admin':'products'})
+def admin_products(request):
+    return render(
+        request,
+        'store/admin_products.html',
+        {
+            'products': Product.objects.select_related('category'),
+            'active_admin': 'products'
+        }
+    )
+
+
 @role_required('ADMIN')
-def admin_product_form(request,pk=None):
-    obj=get_object_or_404(Product,pk=pk) if pk else None
-    form=ProductForm(request.POST or None,request.FILES or None,instance=obj)
-    if request.method=='POST' and form.is_valid():
-        p=form.save(commit=False)
+def admin_product_form(request, pk=None):
+    obj = get_object_or_404(
+        Product,
+        pk=pk
+    ) if pk else None
+
+    form = ProductForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=obj
+    )
+
+    if request.method == 'POST' and form.is_valid():
+        p = form.save(commit=False)
+
         if not p.slug:
             from django.utils.text import slugify
-            p.slug=slugify(p.name)
-        base=p.slug; n=2
-        while Product.objects.filter(slug=p.slug).exclude(pk=p.pk).exists(): p.slug=f'{base}-{n}'; n+=1
-        p.save(); messages.success(request,'Produk berhasil disimpan.'); return redirect('admin_products')
-    return render(request,'store/admin_product_form.html',{'form':form,'active_admin':'products','title':'Tambah Produk' if not obj else 'Ubah Produk'})
+            p.slug = slugify(p.name)
+
+        base = p.slug
+        n = 2
+
+        while Product.objects.filter(
+            slug=p.slug
+        ).exclude(pk=p.pk).exists():
+            p.slug = f'{base}-{n}'
+            n += 1
+
+        p.save()
+
+        messages.success(request, 'Produk berhasil disimpan.')
+        return redirect('admin_products')
+
+    return render(
+        request,
+        'store/admin_product_form.html',
+        {
+            'form': form,
+            'active_admin': 'products',
+            'title': 'Tambah Produk' if not obj else 'Ubah Produk'
+        }
+    )
+
+
 @role_required('ADMIN')
 @require_POST
-def admin_product_delete(request,pk):
+def admin_product_delete(request, pk):
     from django.db.models import ProtectedError
-    p=get_object_or_404(Product,pk=pk)
-    try: p.delete(); messages.success(request,'Produk dihapus.')
-    except ProtectedError: p.is_active=False; p.save(update_fields=['is_active']); messages.warning(request,'Produk memiliki riwayat transaksi sehingga dinonaktifkan, bukan dihapus.')
+
+    p = get_object_or_404(Product, pk=pk)
+
+    try:
+        p.delete()
+        messages.success(request, 'Produk dihapus.')
+
+    except ProtectedError:
+        p.is_active = False
+        p.save(update_fields=['is_active'])
+
+        messages.warning(
+            request,
+            'Produk memiliki riwayat transaksi sehingga dinonaktifkan, bukan dihapus.'
+        )
+
     return redirect('admin_products')
+
+
 @role_required('ADMIN')
 def admin_categories(request):
-    form=CategoryForm(request.POST or None)
-    if request.method=='POST' and form.is_valid(): form.save(); messages.success(request,'Kategori ditambahkan.'); return redirect('admin_categories')
-    return render(request,'store/admin_categories.html',{'categories':Category.objects.annotate(product_count=Count('products')),'form':form,'active_admin':'categories'})
+    form = CategoryForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Kategori ditambahkan.')
+        return redirect('admin_categories')
+
+    return render(
+        request,
+        'store/admin_categories.html',
+        {
+            'categories': Category.objects.annotate(
+                product_count=Count('products')
+            ),
+            'form': form,
+            'active_admin': 'categories'
+        }
+    )
+
+
 @role_required('ADMIN')
 @require_POST
-def admin_category_delete(request,pk):
-    c=get_object_or_404(Category,pk=pk)
-    if c.products.exists(): messages.error(request,'Kategori masih digunakan produk. Pindahkan produk terlebih dahulu.')
-    else: c.delete(); messages.success(request,'Kategori dihapus.')
+def admin_category_delete(request, pk):
+    c = get_object_or_404(Category, pk=pk)
+
+    if c.products.exists():
+        messages.error(
+            request,
+            'Kategori masih digunakan produk. Pindahkan produk terlebih dahulu.'
+        )
+    else:
+        c.delete()
+        messages.success(request, 'Kategori dihapus.')
+
     return redirect('admin_categories')
+
+
 @role_required('ADMIN')
-def admin_employees(request): return render(request,'store/admin_employees.html',{'employees':User.objects.filter(role='EMPLOYEE'),'active_admin':'employees'})
+def admin_employees(request):
+    return render(
+        request,
+        'store/admin_employees.html',
+        {
+            'employees': User.objects.filter(role='EMPLOYEE'),
+            'active_admin': 'employees'
+        }
+    )
+
+
 @role_required('ADMIN')
 def admin_employee_form(request):
-    form=EmployeeForm(request.POST or None)
-    if request.method=='POST' and form.is_valid():
-        d=form.cleaned_data
-        if User.objects.filter(username=d['email']).exists(): form.add_error('email','Email sudah digunakan.')
+    form = EmployeeForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        d = form.cleaned_data
+
+        if User.objects.filter(username=d['email']).exists():
+            form.add_error('email', 'Email sudah digunakan.')
+
         else:
-            User.objects.create_user(username=d['email'],email=d['email'],first_name=d['name'],phone=d['phone'],password=d['password'],role='EMPLOYEE',email_verified=True)
-            messages.success(request,'Akun pegawai berhasil dibuat.'); return redirect('admin_employees')
-    return render(request,'store/admin_employee_form.html',{'form':form,'active_admin':'employees'})
+            User.objects.create_user(
+                username=d['email'],
+                email=d['email'],
+                first_name=d['name'],
+                phone=d['phone'],
+                password=d['password'],
+                role='EMPLOYEE',
+                email_verified=True
+            )
+
+            messages.success(
+                request,
+                'Akun pegawai berhasil dibuat.'
+            )
+
+            return redirect('admin_employees')
+
+    return render(
+        request,
+        'store/admin_employee_form.html',
+        {
+            'form': form,
+            'active_admin': 'employees'
+        }
+    )
+
+
 @role_required('ADMIN')
-def admin_reports(request,kind='transactions'):
-    date_value=request.GET.get('tanggal','')
-    qs=Order.objects.select_related('customer','payment').prefetch_related('items')
+def admin_reports(request, kind='transactions'):
+    date_value = request.GET.get('tanggal', '')
+
+    qs = Order.objects.select_related(
+        'customer',
+        'payment'
+    ).prefetch_related('items')
+
     if date_value:
-        try: qs=qs.filter(created_at__date=date.fromisoformat(date_value))
-        except ValueError: pass
-    context={'orders':qs,'kind':kind,'date_value':date_value,'active_admin':'reports','products':Product.objects.select_related('category'),'sales_items':OrderItem.objects.filter(order__payment__status='PAID').exclude(order__status='CANCELLED').select_related('order').order_by('-order__created_at')}
-    return render(request,'store/admin_report.html',context)
+        try:
+            qs = qs.filter(
+                created_at__date=date.fromisoformat(date_value)
+            )
+        except ValueError:
+            pass
+
+    context = {
+        'orders': qs,
+        'kind': kind,
+        'date_value': date_value,
+        'active_admin': 'reports',
+        'products': Product.objects.select_related('category'),
+        'sales_items': OrderItem.objects.filter(
+            order__payment__status='PAID'
+        ).exclude(
+            order__status='CANCELLED'
+        ).select_related(
+            'order'
+        ).order_by('-order__created_at')
+    }
+
+    return render(
+        request,
+        'store/admin_report.html',
+        context
+    )
+
+
 @role_required('ADMIN')
-def export_report(request,fmt):
-    qs=Order.objects.select_related('customer','payment').prefetch_related('items')
-    date_value=request.GET.get('tanggal','')
+def export_report(request, fmt):
+    qs = Order.objects.select_related(
+        'customer',
+        'payment'
+    ).prefetch_related('items')
+
+    date_value = request.GET.get('tanggal', '')
+
     if date_value:
-        try: qs=qs.filter(created_at__date=date.fromisoformat(date_value))
-        except ValueError: pass
-    rows=[['Kode','Pelanggan','Tanggal','Status Pesanan','Status Pembayaran','Metode','Total']]
-    for o in qs: rows.append([o.code,o.customer.email,o.created_at.strftime('%Y-%m-%d %H:%M'),o.get_status,o.payment.get_status_display(),o.payment.get_method_display(),o.total])
-    if fmt=='xlsx':
+        try:
+            qs = qs.filter(
+                created_at__date=date.fromisoformat(date_value)
+            )
+        except ValueError:
+            pass
+
+    rows = [[
+        'Kode',
+        'Pelanggan',
+        'Tanggal',
+        'Status Pesanan',
+        'Status Pembayaran',
+        'Metode',
+        'Total'
+    ]]
+
+    for o in qs:
+        rows.append([
+            o.code,
+            o.customer.email,
+            o.created_at.strftime('%Y-%m-%d %H:%M'),
+            o.get_status,
+            o.payment.get_status_display(),
+            o.payment.get_method_display(),
+            o.total
+        ])
+
+    if fmt == 'xlsx':
         from openpyxl import Workbook
-        wb=Workbook(); ws=wb.active; ws.title='Laporan Transaksi'
-        for r in rows: ws.append(r)
-        for cell in ws[1]: cell.font=__import__('openpyxl').styles.Font(bold=True)
-        resp=HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); resp['Content-Disposition']='attachment; filename="laporan_kuliner_bengkulu.xlsx"'; wb.save(resp); return resp
-    from reportlab.lib.pagesizes import A4,landscape
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Laporan Transaksi'
+
+        for r in rows:
+            ws.append(r)
+
+        for cell in ws[1]:
+            cell.font = __import__(
+                'openpyxl'
+            ).styles.Font(bold=True)
+
+        resp = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+        resp['Content-Disposition'] = (
+            'attachment; filename="laporan_kuliner_bengkulu.xlsx"'
+        )
+
+        wb.save(resp)
+        return resp
+
+    from reportlab.lib.pagesizes import A4, landscape
     from reportlab.pdfgen import canvas
     from io import BytesIO
-    buf=BytesIO(); c=canvas.Canvas(buf,pagesize=landscape(A4)); w,h=landscape(A4)
-    c.setFont('Helvetica-Bold',15); c.drawString(36,h-40,'Laporan Transaksi Kuliner Bengkulu')
-    y=h-72; c.setFont('Helvetica-Bold',8); headers=rows[0]; xs=[36,115,235,325,420,510,610]
-    for x,t in zip(xs,headers): c.drawString(x,y,t[:22])
-    y-=18; c.setFont('Helvetica',8)
+
+    buf = BytesIO()
+    c = canvas.Canvas(
+        buf,
+        pagesize=landscape(A4)
+    )
+
+    w, h = landscape(A4)
+
+    c.setFont('Helvetica-Bold', 15)
+    c.drawString(
+        36,
+        h - 40,
+        'Laporan Transaksi Kuliner Bengkulu'
+    )
+
+    y = h - 72
+    c.setFont('Helvetica-Bold', 8)
+
+    headers = rows[0]
+    xs = [36, 115, 235, 325, 420, 510, 610]
+
+    for x, t in zip(xs, headers):
+        c.drawString(x, y, t[:22])
+
+    y -= 18
+    c.setFont('Helvetica', 8)
+
     for row in rows[1:]:
-        if y<40: c.showPage(); y=h-40
-        for x,t in zip(xs,row): c.drawString(x,y,str(t)[:22])
-        y-=15
-    c.save(); resp=HttpResponse(buf.getvalue(),content_type='application/pdf'); resp['Content-Disposition']='attachment; filename="laporan_kuliner_bengkulu.pdf"'; return resp
+        if y < 40:
+            c.showPage()
+            y = h - 40
+
+        for x, t in zip(xs, row):
+            c.drawString(x, y, str(t)[:22])
+
+        y -= 15
+
+    c.save()
+
+    resp = HttpResponse(
+        buf.getvalue(),
+        content_type='application/pdf'
+    )
+
+    resp['Content-Disposition'] = (
+        'attachment; filename="laporan_kuliner_bengkulu.pdf"'
+    )
+
+    return resp
+
+
 @role_required('ADMIN')
 def admin_business(request):
-    obj=BusinessProfile.objects.first() or BusinessProfile.objects.create()
-    form=BusinessProfileForm(request.POST or None,instance=obj)
-    if request.method=='POST' and form.is_valid(): form.save(); messages.success(request,'Profil usaha diperbarui.'); return redirect('admin_business')
-    return render(request,'store/admin_business.html',{'form':form,'active_admin':'business'})
+    obj = BusinessProfile.objects.first() or BusinessProfile.objects.create()
 
-# Employee area
+    form = BusinessProfileForm(
+        request.POST or None,
+        instance=obj
+    )
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Profil usaha diperbarui.')
+        return redirect('admin_business')
+
+    return render(
+        request,
+        'store/admin_business.html',
+        {
+            'form': form,
+            'active_admin': 'business'
+        }
+    )
+
+
+# ==========================================================
+# EMPLOYEE AREA
+# ==========================================================
+
 @role_required('EMPLOYEE')
 def employee_dashboard(request):
-    return render(request,'store/employee_dashboard.html',{'active_employee':'dashboard','payments':Payment.objects.filter(status='DETECTED').select_related('order','order__customer')[:8], 'orders':Order.objects.filter(status__in=['WAITING_CONFIRMATION','PROCESSING','READY']).select_related('customer')[:8]})
+    return render(
+        request,
+        'store/employee_dashboard.html',
+        {
+            'active_employee': 'dashboard',
+            'payments': Payment.objects.filter(
+                status='DETECTED'
+            ).select_related(
+                'order',
+                'order__customer'
+            )[:8],
+            'orders': Order.objects.filter(
+                status__in=[
+                    'WAITING_CONFIRMATION',
+                    'PROCESSING',
+                    'READY'
+                ]
+            ).select_related('customer')[:8]
+        }
+    )
+
+
 @role_required('EMPLOYEE')
-def employee_payments(request): return render(request,'store/employee_payments.html',{'payments':Payment.objects.select_related('order','order__customer').filter(status__in=['DETECTED','REVIEW','REJECTED']),'active_employee':'payments'})
+def employee_payments(request):
+    return render(
+        request,
+        'store/employee_payments.html',
+        {
+            'payments': Payment.objects.select_related(
+                'order',
+                'order__customer'
+            ).filter(
+                status__in=['DETECTED', 'REVIEW', 'REJECTED']
+            ),
+            'active_employee': 'payments'
+        }
+    )
+
+
 @role_required('EMPLOYEE')
-def employee_payment_detail(request,pk):
-    payment=get_object_or_404(Payment.objects.select_related('order','order__customer'),pk=pk)
-    if request.method=='POST' and payment.status in ['DETECTED','REVIEW']:
-        action=request.POST.get('action')
-        if action=='approve':
-            payment.status='PAID'; payment.verified_by=request.user; payment.verified_at=timezone.now(); payment.save()
-            payment.order.status='WAITING_CONFIRMATION'; payment.order.save(update_fields=['status','updated_at'])
-            notify(payment.order.customer,'Pembayaran berhasil',f'Pembayaran pesanan {payment.order.code} telah disetujui.','PAYMENT',payment.order)
-            messages.success(request,'Pembayaran disetujui.')
-        elif action=='reject':
-            payment.status='REJECTED'; payment.verified_by=request.user; payment.verified_at=timezone.now(); payment.staff_note=request.POST.get('note',''); payment.save()
-            notify(payment.order.customer,'Pembayaran ditolak',f'Pembayaran pesanan {payment.order.code} ditolak. Silakan hubungi toko.','PAYMENT',payment.order)
-            messages.warning(request,'Pembayaran ditolak. Tindak lanjut pelanggan mengikuti prosedur toko.')
+def employee_payment_detail(request, pk):
+    payment = get_object_or_404(
+        Payment.objects.select_related(
+            'order',
+            'order__customer'
+        ),
+        pk=pk
+    )
+
+    if request.method == 'POST' and payment.status in ['DETECTED', 'REVIEW']:
+        action = request.POST.get('action')
+
+        if action == 'approve':
+            payment.status = 'PAID'
+            payment.verified_by = request.user
+            payment.verified_at = timezone.now()
+            payment.save()
+
+            payment.order.status = 'WAITING_CONFIRMATION'
+            payment.order.save(
+                update_fields=['status', 'updated_at']
+            )
+
+            notify(
+                payment.order.customer,
+                'Pembayaran berhasil',
+                f'Pembayaran pesanan {payment.order.code} telah disetujui.',
+                'PAYMENT',
+                payment.order
+            )
+
+            messages.success(request, 'Pembayaran disetujui.')
+
+        elif action == 'reject':
+            payment.status = 'REJECTED'
+            payment.verified_by = request.user
+            payment.verified_at = timezone.now()
+            payment.staff_note = request.POST.get('note', '')
+            payment.save()
+
+            notify(
+                payment.order.customer,
+                'Pembayaran ditolak',
+                f'Pembayaran pesanan {payment.order.code} ditolak. Silakan hubungi toko.',
+                'PAYMENT',
+                payment.order
+            )
+
+            messages.warning(
+                request,
+                'Pembayaran ditolak. Tindak lanjut pelanggan mengikuti prosedur toko.'
+            )
+
         return redirect('employee_payments')
-    return render(request,'store/employee_payment_detail.html',{'payment':payment})
+
+    return render(
+        request,
+        'store/employee_payment_detail.html',
+        {'payment': payment}
+    )
+
+
 @role_required('EMPLOYEE')
-def employee_orders(request): return render(request,'store/employee_orders.html',{'orders':Order.objects.exclude(status__in=['WAITING_PAYMENT','CANCELLED']).select_related('customer'),'active_employee':'orders'})
+def employee_orders(request):
+    return render(
+        request,
+        'store/employee_orders.html',
+        {
+            'orders': Order.objects.exclude(
+                status__in=['WAITING_PAYMENT', 'CANCELLED']
+            ).select_related('customer'),
+            'active_employee': 'orders'
+        }
+    )
+
+
 @role_required('EMPLOYEE')
-def employee_order_detail(request,code):
-    order=get_object_or_404(Order.objects.select_related('customer').prefetch_related('items'),code=code)
-    if request.method=='POST':
-        new=request.POST.get('status')
-        allowed={'WAITING_CONFIRMATION':['PROCESSING'],'PROCESSING':['READY'],'READY':['COMPLETED']}
-        if new in allowed.get(order.status,[]):
-            order.status=new; order.save(update_fields=['status','updated_at'])
-            notify(order.customer,'Status pesanan diperbarui',f'Pesanan {order.code}: {order.get_status}.','ORDER',order)
-            messages.success(request,'Status pesanan diperbarui.')
-        return redirect('employee_order_detail',code=code)
-    return render(request,'store/employee_order_detail.html',{'order':order})
+def employee_order_detail(request, code):
+    order = get_object_or_404(
+        Order.objects.select_related(
+            'customer'
+        ).prefetch_related('items'),
+        code=code
+    )
+
+    if request.method == 'POST':
+        new = request.POST.get('status')
+
+        allowed = {
+            'WAITING_CONFIRMATION': ['PROCESSING'],
+            'PROCESSING': ['READY'],
+            'READY': ['COMPLETED']
+        }
+
+        if new in allowed.get(order.status, []):
+            order.status = new
+            order.save(update_fields=['status', 'updated_at'])
+
+            notify(
+                order.customer,
+                'Status pesanan diperbarui',
+                f'Pesanan {order.code}: {order.get_status}.',
+                'ORDER',
+                order
+            )
+
+            messages.success(
+                request,
+                'Status pesanan diperbarui.'
+            )
+
+        return redirect(
+            'employee_order_detail',
+            code=code
+        )
+
+    return render(
+        request,
+        'store/employee_order_detail.html',
+        {'order': order}
+    )
+
+
+# ==========================================================
+# PAYMENT WEBHOOK
+# ==========================================================
 
 @csrf_exempt
 @require_POST
 def payment_webhook(request):
     """Webhook scaffold: configure a real gateway and HMAC secret before enabling in production."""
-    secret=settings.PAYMENT_WEBHOOK_SECRET
-    if not secret: return JsonResponse({'ok':False,'error':'Webhook belum dikonfigurasi.'},status=503)
-    signature=request.headers.get('X-KB-Signature','')
-    expected=hmac.new(secret.encode(),request.body,hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(signature,expected): return JsonResponse({'ok':False,'error':'Invalid signature'},status=403)
-    try: data=json.loads(request.body); payment=Payment.objects.get(order__code=data['order_code'])
-    except Exception: return JsonResponse({'ok':False,'error':'Payload tidak valid'},status=400)
-    # Gateway callback only marks detection; employee must review and approve.
-    if data.get('status') in ['PAID','SETTLEMENT','SUCCESS'] and payment.status=='WAITING':
-        payment.status='DETECTED'; payment.gateway_transaction_id=str(data.get('transaction_id','')); payment.gateway_status=str(data.get('status')); payment.save()
-        for emp in User.objects.filter(role='EMPLOYEE'): notify(emp,'Pembayaran perlu diperiksa',f'Pembayaran {payment.order.code} terdeteksi gateway.','PAYMENT',payment.order)
-    return JsonResponse({'ok':True})
+
+    secret = settings.PAYMENT_WEBHOOK_SECRET
+
+    if not secret:
+        return JsonResponse(
+            {
+                'ok': False,
+                'error': 'Webhook belum dikonfigurasi.'
+            },
+            status=503
+        )
+
+    signature = request.headers.get('X-KB-Signature', '')
+
+    expected = hmac.new(
+        secret.encode(),
+        request.body,
+        hashlib.sha256
+    ).hexdigest()
+
+    if not hmac.compare_digest(signature, expected):
+        return JsonResponse(
+            {
+                'ok': False,
+                'error': 'Invalid signature'
+            },
+            status=403
+        )
+
+    try:
+        data = json.loads(request.body)
+        payment = Payment.objects.get(
+            order__code=data['order_code']
+        )
+
+    except Exception:
+        return JsonResponse(
+            {
+                'ok': False,
+                'error': 'Payload tidak valid'
+            },
+            status=400
+        )
+
+    if data.get('status') in [
+        'PAID',
+        'SETTLEMENT',
+        'SUCCESS'
+    ] and payment.status == 'WAITING':
+
+        payment.status = 'DETECTED'
+        payment.gateway_transaction_id = str(
+            data.get('transaction_id', '')
+        )
+        payment.gateway_status = str(data.get('status'))
+        payment.save()
+
+        for emp in User.objects.filter(role='EMPLOYEE'):
+            notify(
+                emp,
+                'Pembayaran perlu diperiksa',
+                f'Pembayaran {payment.order.code} terdeteksi gateway.',
+                'PAYMENT',
+                payment.order
+            )
+
+    return JsonResponse({'ok': True})
+
+
+# ==========================================================
+# LOGOUT
+# ==========================================================
 
 def logout_view(request):
-    logout(request); return redirect('login')
+    logout(request)
+    return redirect('login')
 
+
+# ==========================================================
+# CHANGE EMAIL
+# ==========================================================
 
 @active_customer
 def change_email(request):
-    if request.method=='POST':
-        new_email=request.POST.get('new_email','').strip().lower()
-        if not new_email or User.objects.filter(email__iexact=new_email).exclude(pk=request.user.pk).exists():
-            messages.error(request,'Email kosong atau sudah digunakan.')
+    if request.method == 'POST':
+        new_email = request.POST.get(
+            'new_email',
+            ''
+        ).strip().lower()
+
+        if not new_email or User.objects.filter(
+            email__iexact=new_email
+        ).exclude(pk=request.user.pk).exists():
+
+            messages.error(
+                request,
+                'Email kosong atau sudah digunakan.'
+            )
+
         else:
-            token=signing.dumps({'uid':request.user.pk,'email':new_email},salt='kb-change-email')
-            url=request.build_absolute_uri('/verifikasi-email-baru/'+token+'/')
-            send_mail('Verifikasi email baru - Kuliner Bengkulu',f'Klik tautan berikut untuk mengganti email: {url}',settings.DEFAULT_FROM_EMAIL,[new_email])
-            messages.success(request,'Tautan verifikasi dikirim ke email baru. Periksa terminal pada mode lokal.')
+            token = signing.dumps(
+                {
+                    'uid': request.user.pk,
+                    'email': new_email
+                },
+                salt='kb-change-email'
+            )
+
+            url = request.build_absolute_uri(
+                '/verifikasi-email-baru/' + token + '/'
+            )
+
+            send_mail(
+                'Verifikasi email baru - Kuliner Bengkulu',
+                f'Klik tautan berikut untuk mengganti email: {url}',
+                settings.DEFAULT_FROM_EMAIL,
+                [new_email]
+            )
+
+            messages.success(
+                request,
+                'Tautan verifikasi dikirim ke email baru. Periksa terminal pada mode lokal.'
+            )
+
     return redirect('profile')
 
-def verify_new_email(request,token):
-    if not request.user.is_authenticated: return redirect('login')
+
+def verify_new_email(request, token):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     try:
-        data=signing.loads(token,salt='kb-change-email',max_age=60*60*24)
-        if int(data['uid']) != request.user.pk: raise ValueError('Akun tidak cocok')
-        new_email=data['email']
-        if User.objects.filter(email__iexact=new_email).exclude(pk=request.user.pk).exists(): raise ValueError('Email sudah digunakan')
-        request.user.email=new_email; request.user.username=new_email; request.user.save(update_fields=['email','username'])
-        messages.success(request,'Alamat email berhasil diperbarui.')
-    except Exception: messages.error(request,'Tautan email tidak valid atau kedaluwarsa.')
+        data = signing.loads(
+            token,
+            salt='kb-change-email',
+            max_age=60 * 60 * 24
+        )
+
+        if int(data['uid']) != request.user.pk:
+            raise ValueError('Akun tidak cocok')
+
+        new_email = data['email']
+
+        if User.objects.filter(
+            email__iexact=new_email
+        ).exclude(pk=request.user.pk).exists():
+            raise ValueError('Email sudah digunakan')
+
+        request.user.email = new_email
+        request.user.username = new_email
+        request.user.save(
+            update_fields=['email', 'username']
+        )
+
+        messages.success(
+            request,
+            'Alamat email berhasil diperbarui.'
+        )
+
+    except Exception:
+        messages.error(
+            request,
+            'Tautan email tidak valid atau kedaluwarsa.'
+        )
+
     return redirect('profile')
+
+
+# ==========================================================
+# BANNER MANAGEMENT
+# ==========================================================
 
 @role_required('ADMIN')
 def admin_banners(request):
-    return render(request,'store/admin_banners.html',{'banners':Banner.objects.all(),'active_admin':'banners'})
+    return render(
+        request,
+        'store/admin_banners.html',
+        {
+            'banners': Banner.objects.all(),
+            'active_admin': 'banners'
+        }
+    )
+
 
 @role_required('ADMIN')
-def admin_banner_form(request,pk=None):
-    obj=get_object_or_404(Banner,pk=pk) if pk else None
-    form=BannerForm(request.POST or None,request.FILES or None,instance=obj)
-    if request.method=='POST' and form.is_valid():
-        form.save(); messages.success(request,'Banner berhasil disimpan.'); return redirect('admin_banners')
-    return render(request,'store/admin_banner_form.html',{'form':form,'active_admin':'banners'})
+def admin_banner_form(request, pk=None):
+    obj = get_object_or_404(
+        Banner,
+        pk=pk
+    ) if pk else None
+
+    form = BannerForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=obj
+    )
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Banner berhasil disimpan.')
+        return redirect('admin_banners')
+
+    return render(
+        request,
+        'store/admin_banner_form.html',
+        {
+            'form': form,
+            'active_admin': 'banners'
+        }
+    )
+
 
 @role_required('ADMIN')
 @require_POST
-def admin_banner_delete(request,pk):
-    get_object_or_404(Banner,pk=pk).delete(); messages.success(request,'Banner dihapus.'); return redirect('admin_banners')
+def admin_banner_delete(request, pk):
+    get_object_or_404(
+        Banner,
+        pk=pk
+    ).delete()
+
+    messages.success(request, 'Banner dihapus.')
+    return redirect('admin_banners')
