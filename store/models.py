@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
+from pathlib import Path
+from django.conf import settings
 
 class User(AbstractUser):
     ROLE_CHOICES=[('CUSTOMER','Pelanggan'),('EMPLOYEE','Pegawai'),('ADMIN','Admin')]
@@ -48,18 +50,47 @@ class Product(models.Model):
     def __str__(self): return self.name
     @property
     def is_purchasable(self): return self.is_active and self.price is not None and self.price > 0 and self.stock > 0
-@property
-def photo_url(self):
-    if self.image:
-        return self.image.url
+    @property
+    def photo_url(self):
+        """URL foto produk: utamakan upload, lalu cari foto bawaan dari static."""
+        # Gunakan foto yang diunggah dari dashboard hanya jika file-nya benar-benar ada.
+        if self.image and self.image.name:
+            try:
+                if self.image.storage.exists(self.image.name):
+                    return self.image.url
+            except Exception:
+                # Lanjutkan ke foto bawaan jika file media tidak tersedia.
+                pass
 
-    if self.image_path:
-        path = self.image_path.replace("\\", "/").lstrip("/")
-        if path.startswith("products/"):
-            path = path[len("products/"):]
-        return f"/static/images/products/{path}"
+        candidate_names = []
 
-    return "/static/images/placeholder-food.svg"
+        # image_path bisa berupa nama file saja atau path dengan folder di depannya.
+        if self.image_path:
+            stored_path = str(self.image_path).strip().replace('\\', '/')
+            if stored_path:
+                candidate_names.append(stored_path.rsplit('/', 1)[-1])
+
+        # Fallback berdasarkan slug; contoh "santan-palak-ikan" menjadi
+        # "santan_palak_ikan.jpg". Ini tidak membutuhkan perubahan database.
+        if self.slug:
+            slug_stem = str(self.slug).strip().replace('-', '_')
+            if slug_stem:
+                candidate_names.extend([
+                    f'{slug_stem}.jpg',
+                    f'{slug_stem}.jpeg',
+                    f'{slug_stem}.png',
+                ])
+
+        products_dir = Path(settings.BASE_DIR) / 'static' / 'images' / 'products'
+        static_prefix = settings.STATIC_URL.rstrip('/')
+
+        # Hilangkan kandidat duplikat dan gunakan hanya file yang memang tersedia.
+        for filename in dict.fromkeys(candidate_names):
+            if (products_dir / filename).is_file():
+                return f'{static_prefix}/images/products/{filename}'
+
+        # Pendap tetap menggunakan placeholder karena file fotonya memang tidak ada.
+        return f'{static_prefix}/images/placeholder-food.svg'
 
 class Cart(models.Model):
     customer=models.OneToOneField(User,on_delete=models.CASCADE,related_name='cart')
